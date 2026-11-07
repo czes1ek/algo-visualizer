@@ -83,9 +83,10 @@ function frame() {
 
 // ---------------------------------------------------------------- pointer input (mouse + touch)
 function cellFromEvent(e) {
+  // Measure inside the canvas border, so clicks map to the cell under the pointer.
   const r = canvas.getBoundingClientRect();
-  const x = Math.floor(((e.clientX - r.left) / r.width) * COLS);
-  const y = Math.floor(((e.clientY - r.top) / r.height) * ROWS);
+  const x = Math.floor(((e.clientX - r.left - canvas.clientLeft) / canvas.clientWidth) * COLS);
+  const y = Math.floor(((e.clientY - r.top - canvas.clientTop) / canvas.clientHeight) * ROWS);
   if (x < 0 || y < 0 || x >= COLS || y >= ROWS) return -1;
   return y * COLS + x;
 }
@@ -99,6 +100,7 @@ function applyDrag(i) {
 }
 
 canvas.addEventListener('pointerdown', (e) => {
+  if (!engine) return; // WebAssembly still loading (or failed to load)
   const i = cellFromEvent(e);
   if (i < 0) return;
   canvas.setPointerCapture(e.pointerId);
@@ -144,10 +146,22 @@ function wire() {
   $('speed').addEventListener('input', updateSpeedLabel);
   updateSpeedLabel();
 
+  // A mouse or touch click leaves focus on the control, which would swallow Space and
+  // the arrow keys. Drop it after pointer clicks; keyboard users keep focus where they put it.
+  document.addEventListener('click', (e) => {
+    if (e.detail === 0) return; // activated from the keyboard
+    setTimeout(() => {
+      const el = document.activeElement;
+      if (el && el.matches('button, input[type=radio], input[type=range]')) el.blur();
+    });
+  });
+
   document.addEventListener('keydown', (e) => {
     const tag = e.target.tagName;
-    if (tag === 'SELECT' || tag === 'INPUT' || tag === 'BUTTON' || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
     const k = e.key.toLowerCase();
+    // A focused control keeps its own keys: Space/Enter activate it, arrows move a slider, radio or dropdown.
+    if ((tag === 'BUTTON' || tag === 'INPUT' || tag === 'SELECT') && (k === ' ' || k === 'enter' || k.startsWith('arrow'))) return;
     if (k >= '1' && k <= '5') { $('algo').value = String(Number(k) - 1); edit(() => engine.reset()); }
     else if (k === ' ') toggleRun();
     else if (k === 's') stepOnce();

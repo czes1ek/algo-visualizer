@@ -25,6 +25,8 @@ enum Code : std::uint8_t {
 class Engine {
 public:
     Engine(int width, int height) : grid_(width, height), view_(static_cast<std::size_t>(grid_.size()), 0) {}
+    Engine(const Engine&) = delete;  // search_ refers to grid_
+    Engine& operator=(const Engine&) = delete;
 
     int width() const { return grid_.width(); }
     int height() const { return grid_.height(); }
