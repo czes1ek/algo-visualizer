@@ -1,0 +1,13 @@
+build*/
+site/
+.cache/
+compile_commands.json
+*.exe
+*.o
+*.obj
+*.dll
+.DS_Store
+.vscode/
+.idea/
+KICKOFF.md
+.claude/settings.local.json
