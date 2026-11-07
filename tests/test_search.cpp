@@ -1,6 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators.hpp>
 
+#include <algorithm>
 #include <string>
 #include <vector>
 
@@ -75,8 +76,16 @@ TEST_CASE("every algorithm finds a valid path when one exists", "[search]") {
     Search s(g, algo);
     REQUIRE(s.run() == Status::Found);
     REQUIRE(pathIsValid(g, s.path()));
-    REQUIRE(s.stats().pathLength == static_cast<int>(s.path().size()) - 1);
-    REQUIRE(s.stats().visited == static_cast<int>(s.visitOrder().size()));
+
+    // Each cell is expanded at most once (lazy deletion skips stale heap entries).
+    std::vector<int> order = s.visitOrder();
+    std::sort(order.begin(), order.end());
+    REQUIRE(std::adjacent_find(order.begin(), order.end()) == order.end());
+
+    // The reported cost is the sum of entry costs along the returned path.
+    int cost = 0;
+    for (std::size_t i = 1; i < s.path().size(); ++i) cost += g.cost(s.path()[i]);
+    REQUIRE(s.stats().pathCost == cost);
 }
 
 TEST_CASE("optimal algorithms find the known shortest path", "[search]") {
@@ -148,6 +157,17 @@ TEST_CASE("searches are deterministic", "[search]") {
     b.run();
     REQUIRE(a.visitOrder() == b.visitOrder());
     REQUIRE(a.path() == b.path());
+}
+
+TEST_CASE("heap ties break by insertion order", "[search]") {
+    // From the centre of an open 5x5 grid, all four neighbours tie on g = 1, so
+    // Dijkstra must expand them in the order they were pushed: Up, Right, Down, Left.
+    Grid g(5, 5);
+    g.setStart(g.index(2, 2));
+    g.setGoal(g.index(4, 4));
+    Search s(g, Algorithm::Dijkstra);
+    s.run(5);
+    REQUIRE(s.visitOrder() == std::vector<int>{12, 7, 13, 17, 11});
 }
 
 TEST_CASE("DFS explores Up first, BFS goes level by level", "[search]") {

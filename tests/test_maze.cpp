@@ -33,8 +33,7 @@ TEST_CASE("every open maze cell is reachable from the start", "[maze]") {
     Grid g(size.first, size.second);
     generateMaze(g, seed);
 
-    // Flood the whole grid with BFS by aiming at an unreachable goal is awkward,
-    // so run BFS to the goal and then flood from its visit order instead.
+    // Flood fill from the start, then check that no passable cell was missed.
     std::vector<bool> seen(static_cast<std::size_t>(g.size()), false);
     std::vector<int> queue{g.start()};
     seen[static_cast<std::size_t>(g.start())] = true;
@@ -66,6 +65,11 @@ TEST_CASE("maze keeps endpoints open and walls the border", "[maze]") {
     REQUIRE(g.at(g.goal()) == Cell::Empty);
     for (int x = 0; x < g.width(); ++x) {
         REQUIRE(g.at(g.index(x, 0)) == Cell::Wall);
+        REQUIRE(g.at(g.index(x, g.height() - 1)) == Cell::Wall);
+    }
+    for (int y = 0; y < g.height(); ++y) {
+        REQUIRE(g.at(g.index(0, y)) == Cell::Wall);
+        REQUIRE(g.at(g.index(g.width() - 1, y)) == Cell::Wall);
     }
 }
 
