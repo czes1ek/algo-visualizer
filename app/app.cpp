@@ -44,7 +44,7 @@ App::App()
     window_.setFramerateLimit(60);
 }
 
-int App::run(float smokeTestSeconds) {
+int App::run(bool smokeTest) {
     sf::Clock clock;
     while (window_.isOpen()) {
         while (const std::optional event = window_.pollEvent()) {
@@ -52,8 +52,13 @@ int App::run(float smokeTestSeconds) {
         }
         tick();
         draw();
-        if (smokeTestSeconds > 0.f && clock.getElapsedTime().asSeconds() > smokeTestSeconds) {
-            window_.close();
+        if (smokeTest) {
+            const float t = clock.getElapsedTime().asSeconds();
+            const bool found = search_ && search_->status() == Status::Found;
+            if ((found && t > 1.f) || t > 10.f) {
+                window_.close();
+                return found ? 0 : 1;
+            }
         }
     }
     return 0;
@@ -62,7 +67,7 @@ int App::run(float smokeTestSeconds) {
 void App::startDemo() {
     generateMaze(grid_, 7);
     algorithm_ = Algorithm::AStar;
-    speedIndex_ = static_cast<int>(kSpeeds.size()) - 1;
+    speedIndex_ = 4;  // 16 steps per frame: visibly animated, done well inside the smoke test
     resetSearch();
     ensureSearch();
     running_ = true;
@@ -104,7 +109,13 @@ void App::handle(const sf::Event& event) {
     if (event.is<sf::Event::Closed>()) {
         window_.close();
     } else if (const auto* key = event.getIf<sf::Event::KeyPressed>()) {
+        if (key->code == sf::Keyboard::Key::W) weightKeyHeld_ = true;
         onKey(*key);
+    } else if (const auto* released = event.getIf<sf::Event::KeyReleased>()) {
+        if (released->code == sf::Keyboard::Key::W) weightKeyHeld_ = false;
+    } else if (event.is<sf::Event::FocusLost>()) {
+        weightKeyHeld_ = false;
+        drag_ = Drag::None;
     } else if (const auto* press = event.getIf<sf::Event::MouseButtonPressed>()) {
         const auto cell = cellAt(press->position);
         if (!cell) return;
@@ -129,7 +140,7 @@ void App::onPointer(sf::Vector2i pos) {
     if (!cell) return;
     switch (drag_) {
         case Drag::Paint:
-            grid_.set(*cell, sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W) ? Cell::Weight : Cell::Wall);
+            grid_.set(*cell, weightKeyHeld_ ? Cell::Weight : Cell::Wall);
             break;
         case Drag::Erase: grid_.set(*cell, Cell::Empty); break;
         case Drag::MoveStart: grid_.setStart(*cell); break;
@@ -226,14 +237,15 @@ void App::draw() {
     y += 30.f;
     const auto line = [&](const std::string& label, const std::string& value, sf::Color color = kSoft) {
         drawText(verts_, label, px, y, 2.f, kSoft);
-        drawText(verts_, value, px + 130.f, y, 2.f, color);
+        drawText(verts_, value, px + 120.f, y, 2.f, color);
         y += 22.f;
     };
     line("ALGO", name(algorithm_), kOrange);
     const int speed = kSpeeds[static_cast<std::size_t>(speedIndex_)];
     line("SPEED", speed < 0 ? "INSTANT" : std::to_string(speed) + "/FRAME");
     const Stats stats = search_ ? search_->stats() : Stats{};
-    line("STATUS", search_ ? (running_ ? "RUNNING" : statusText(search_->status())) : "IDLE",
+    const bool paused = search_ && !running_ && search_->status() == Status::Running;
+    line("STATUS", search_ ? (paused ? "PAUSED" : statusText(search_->status())) : "IDLE",
          search_ && search_->status() == Status::Found ? kStart : kSoft);
     line("VISITED", std::to_string(stats.visited));
     line("FRONTIER", std::to_string(stats.frontier));

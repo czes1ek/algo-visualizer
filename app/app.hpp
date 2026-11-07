@@ -14,8 +14,11 @@ namespace algoviz::app {
 class App {
 public:
     App();
-    /// Runs until the window closes. If smokeTestSeconds > 0, closes itself after that long.
-    int run(float smokeTestSeconds = 0.f);
+    App(const App&) = delete;
+    App& operator=(const App&) = delete;
+    /// Runs until the window closes. Smoke-test mode closes the window once the search reaches
+    /// the goal (after at least 1 s of frames) and returns 0, or gives up after 10 s and returns 1.
+    int run(bool smokeTest = false);
     /// Loads a seeded maze and starts A* (used for screenshots and the smoke test).
     void startDemo();
 
@@ -37,13 +40,14 @@ private:
     static constexpr int kCols = 40;
     static constexpr int kRows = 30;
     static constexpr float kCell = 20.f;
-    static constexpr float kPanelW = 280.f;
+    static constexpr float kPanelW = 360.f;  // fits "GREEDY BEST-FIRST" at font scale 2
 
     sf::RenderWindow window_;
     Grid grid_;
     std::optional<Search> search_;
     Algorithm algorithm_ = Algorithm::AStar;
     bool running_ = false;
+    bool weightKeyHeld_ = false;  // tracked from key events; isKeyPressed needs Input Monitoring on macOS
     int speedIndex_ = 2;
     Drag drag_ = Drag::None;
     std::uint32_t seed_ = 2026;
