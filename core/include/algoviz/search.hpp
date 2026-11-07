@@ -36,7 +36,11 @@ struct Stats {
 /// break by insertion order.
 class Search {
 public:
+    /// Keeps a reference to grid, which must outlive the search and not be resized.
     Search(const Grid& grid, Algorithm algorithm);
+    Search(Grid&&, Algorithm) = delete;  // would dangle
+    Search(const Search&) = delete;      // a copy would share the reference but not stay in sync
+    Search& operator=(const Search&) = delete;
 
     /// Expands one node. Returns the status afterwards.
     Status step();

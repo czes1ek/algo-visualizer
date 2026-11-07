@@ -32,20 +32,22 @@ void Grid::set(int i, Cell c) {
     cells_.at(static_cast<std::size_t>(i)) = c;
 }
 
-void Grid::setStart(int i) {
-    if (i < 0 || i >= size() || i == goal_) {
+void Grid::moveEndpoint(int& endpoint, Cell& under, int other, int i) {
+    if (i < 0 || i >= size() || i == other || i == endpoint) {
         return;
     }
-    start_ = i;
+    cells_[static_cast<std::size_t>(endpoint)] = under;
+    under = cells_[static_cast<std::size_t>(i)];
     cells_[static_cast<std::size_t>(i)] = Cell::Empty;
+    endpoint = i;
+}
+
+void Grid::setStart(int i) {
+    moveEndpoint(start_, underStart_, goal_, i);
 }
 
 void Grid::setGoal(int i) {
-    if (i < 0 || i >= size() || i == start_) {
-        return;
-    }
-    goal_ = i;
-    cells_[static_cast<std::size_t>(i)] = Cell::Empty;
+    moveEndpoint(goal_, underGoal_, start_, i);
 }
 
 int Grid::manhattan(int a, int b) const noexcept {
@@ -73,10 +75,14 @@ int Grid::neighbors(int i, std::array<int, 4>& out) const {
 
 void Grid::clear() {
     std::fill(cells_.begin(), cells_.end(), Cell::Empty);
+    underStart_ = Cell::Empty;
+    underGoal_ = Cell::Empty;
 }
 
 void Grid::clearType(Cell type) {
     std::replace(cells_.begin(), cells_.end(), type, Cell::Empty);
+    if (underStart_ == type) underStart_ = Cell::Empty;
+    if (underGoal_ == type) underGoal_ = Cell::Empty;
 }
 
 }  // namespace algoviz

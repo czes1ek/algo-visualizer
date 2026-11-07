@@ -32,7 +32,9 @@ public:
     [[nodiscard]] int start() const noexcept { return start_; }
     [[nodiscard]] int goal() const noexcept { return goal_; }
     /// Moves the start (or goal). Ignored if it would land on the other endpoint.
-    /// The target cell is cleared to Empty.
+    /// The endpoint's cell reads as Empty while it sits there; the cell type it
+    /// covered (wall or weight) comes back when it moves on, so dragging an
+    /// endpoint across the grid doesn't erase what it passes over.
     void setStart(int i);
     void setGoal(int i);
 
@@ -45,17 +47,21 @@ public:
     /// Up, Right, Down, Left. Returns how many were written.
     int neighbors(int i, std::array<int, 4>& out) const;
 
-    /// Sets every cell to Empty.
+    /// Sets every cell to Empty, including the cells under the endpoints.
     void clear();
-    /// Sets every cell of the given type to Empty.
+    /// Sets every cell of the given type to Empty, including under the endpoints.
     void clearType(Cell type);
 
 private:
+    void moveEndpoint(int& endpoint, Cell& under, int other, int i);
+
     int width_;
     int height_;
     std::vector<Cell> cells_;
     int start_;
     int goal_;
+    Cell underStart_ = Cell::Empty;  // what the start covers
+    Cell underGoal_ = Cell::Empty;   // what the goal covers
 };
 
 }  // namespace algoviz

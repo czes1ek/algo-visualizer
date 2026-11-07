@@ -27,9 +27,30 @@ TEST_CASE("start and goal can never be walls or overlap", "[grid]") {
     REQUIRE(g.goal() == oldGoal);
 
     g.set(g.index(0, 0), Cell::Wall);
-    g.setStart(g.index(0, 0));  // moving onto a wall clears it
+    g.setStart(g.index(0, 0));  // an endpoint's own cell always reads Empty
     REQUIRE(g.start() == g.index(0, 0));
     REQUIRE(g.at(g.start()) == Cell::Empty);
+    REQUIRE(g.passable(g.start()));
+}
+
+TEST_CASE("dragging an endpoint puts back the cells it passes over", "[grid]") {
+    Grid g(6, 1);
+    g.setStart(0);
+    g.setGoal(5);
+    g.set(1, Cell::Wall);
+    g.set(2, Cell::Weight);
+    for (int i = 1; i <= 3; ++i) g.setStart(i);  // drag the start right across both
+    REQUIRE(g.start() == 3);
+    REQUIRE(g.at(1) == Cell::Wall);
+    REQUIRE(g.at(2) == Cell::Weight);
+    REQUIRE(g.at(0) == Cell::Empty);
+
+    g.setGoal(1);  // the goal covers the wall; clearing walls removes it for good
+    REQUIRE(g.at(1) == Cell::Empty);
+    g.clearType(Cell::Wall);
+    g.setGoal(5);
+    REQUIRE(g.at(1) == Cell::Empty);
+    REQUIRE(g.at(2) == Cell::Weight);
 }
 
 TEST_CASE("neighbors come in Up, Right, Down, Left order and skip walls", "[grid]") {
