@@ -47,7 +47,7 @@ An interactive pathfinding visualizer written in modern C++. Draw walls and weig
 Editing the grid while a search is shown clears the search overlay. Editing during a run pauses it first.
 
 ## Stats panel (both front ends)
-Algorithm name, status (idle / running / found / no path), nodes visited, frontier size, path length (cells), path cost, and steps taken. After a run, show whether the path is guaranteed optimal for that algorithm.
+Algorithm name, status (idle / running / found / no path), nodes visited, frontier size, path length (moves), path cost, and steps taken. After a run, show whether the path is guaranteed optimal for that algorithm.
 
 ## Look
 The browser demo uses the casperbien.com "Night Shift" palette so it matches the portfolio: page navy `#0B0B30`, orange `#F7A21B`, purple `#5B16C9`, headline orange `#FF7A45`, magenta `#FF4FD8`, badge blue `#1652B8`, soft text `#D9D9F0`, CRT green `#3EE07A`.
@@ -56,7 +56,7 @@ Use a monospace font for stats. The desktop app draws text with a built-in 5×7 
 
 ## Quality bars
 - C++20, zero warnings with the flags in CLAUDE.md rule 7, on GCC (Linux, MSYS2 on Windows) and Apple Clang (macOS), all in CI.
-- Unit tests (Catch2 v3) for every algorithm: finds the known-optimal path length on fixed grids (BFS, Dijkstra, A*); start == goal; goal walled off (no path); weighted grid where the cheapest path is longer in cells than the shortest (Dijkstra and A* take the cheap one, BFS doesn't); deterministic order (the same grid gives the same visit sequence); maze generator (seeded and reproducible; every open cell is reachable). An ASan/UBSan CI job is *stretch*.
+- Unit tests (Catch2 v3) for every algorithm: finds the known-optimal path length on fixed grids (BFS, Dijkstra, A*); start and goal can't overlap (D15), and adjacent start and goal; goal walled off (no path); weighted grid where the cheapest path is longer in cells than the shortest (Dijkstra and A* take the cheap one, BFS doesn't); deterministic order (the same grid gives the same visit sequence); maze generator (seeded and reproducible; every open cell is reachable). An ASan/UBSan CI job is *stretch*.
 - Desktop: holds 60 fps on the default 40×30 grid at max speed.
 - Browser: works in current Chrome, Firefox and Safari, including iPhone Safari with touch. No horizontal scroll at 390px wide. The whole page (HTML, JS, WASM, CSS) is under 1 MB uncompressed. No third-party requests, no analytics, no cookies.
 - Accessibility (browser): every control is a real `<button>`/`<select>`/`<input>` with a label, there's visible focus, and the stats panel is text (not drawn on the canvas).

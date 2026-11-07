@@ -25,7 +25,7 @@ An interactive pathfinding visualizer written in C++20. Draw walls and weighted 
 | DFS | stack | no | no |
 | Dijkstra | min-heap on g | yes | yes |
 | A* | min-heap on g + h (Manhattan) | yes | yes (admissible heuristic) |
-| Greedy Best-First | min-heap on h | yes | no |
+| Greedy Best-First | min-heap on h | cost reported only (ignored when choosing) | no |
 
 ## Controls
 | Action | Desktop | Browser |
@@ -43,7 +43,7 @@ An interactive pathfinding visualizer written in C++20. Draw walls and weighted 
 
 ## Build
 
-Requires CMake ≥ 3.24, a C++20 compiler and Ninja. SFML 3 is used from your system if `find_package` finds it; otherwise CMake fetches SFML 3.0.2 automatically. Catch2 is fetched for the tests.
+Requires CMake ≥ 3.28, a C++20 compiler and Ninja. SFML 3 is used from your system if `find_package` finds it; otherwise CMake fetches SFML 3.0.2 automatically. Catch2 is fetched for the tests.
 
 **macOS**
 ```sh
@@ -63,7 +63,7 @@ cmake --build build && ctest --test-dir build
 
 **Linux (Debian/Ubuntu)**
 ```sh
-sudo apt install cmake ninja-build libxrandr-dev libxcursor-dev libxi-dev libudev-dev libgl1-mesa-dev libfreetype-dev
+sudo apt install git g++ cmake ninja-build libxrandr-dev libxcursor-dev libxi-dev libudev-dev libgl1-mesa-dev libfreetype-dev
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
 cmake --build build && ctest --test-dir build
 ./build/algoviz
@@ -77,7 +77,7 @@ mkdir -p site && cp web/* build-web/algoviz.js build-web/algoviz.wasm site/ && r
 python3 -m http.server -d site 8000   # open http://localhost:8000
 ```
 
-`./build/algoviz --demo` opens straight into a maze with A* running; `--smoke-test` does the same and exits after 3 seconds.
+`./build/algoviz --demo` opens straight into a maze with A* running; `--smoke-test` does the same and exits 0 once A* reaches the goal (or 1 if it hasn't within 10 seconds).
 
 ## Architecture
 ```
@@ -94,7 +94,7 @@ python3 -m http.server -d site 8000   # open http://localhost:8000
 - Everything compiles with `-Wall -Wextra -Wpedantic -Wconversion -Wshadow`, and CI treats warnings as errors.
 
 ## Testing
-`ctest` runs the Catch2 suite: path validity for every algorithm, known shortest-path lengths, unreachable goals, weighted grids where the cheapest path is longer than the shortest, determinism, DFS/BFS expansion order, and maze reproducibility and connectivity across several sizes and seeds. CI builds and tests on Linux, macOS and Windows (MSYS2), runs a headless smoke test of the desktop app, and deploys the web demo to GitHub Pages.
+`ctest` runs the Catch2 suite: path validity for every algorithm, known shortest-path lengths, unreachable goals, weighted grids where the cheapest path is longer than the shortest, determinism and heap tie-breaking, DFS/BFS expansion order, no cell expanded twice, path cost matching the path, endpoints that restore the cells they're dragged over, and maze reproducibility and connectivity across several sizes and seeds. CI builds and tests on Linux, macOS and Windows (MSYS2), runs a headless smoke test of the desktop app (it fails unless A* solves the demo maze), and deploys the web demo to GitHub Pages.
 
 ## License
 MIT. See [LICENSE](LICENSE).

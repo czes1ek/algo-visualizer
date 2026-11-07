@@ -31,7 +31,7 @@ docs/media/web-demo.png
 ## Decision log
 | # | Decision | Why | Status |
 |---|---|---|---|
-| D1 | C++20, CMake ≥ 3.24, Ninja | Modern standard; one build for every target | Locked |
+| D1 | C++20, CMake ≥ 3.28 (FetchContent `SYSTEM` and `EXCLUDE_FROM_ALL`), Ninja | Modern standard; one build for every target | Locked |
 | D2 | Core has no dependencies; front ends are thin | Lets the same engine run native and in WASM, and makes it testable | Locked |
 | D3 | SFML 3: use the system package if `find_package(SFML 3)` finds it, otherwise FetchContent SFML 3.0.2 (audio and network off) | Fast local builds; reproducible CI | Decided |
 | D4 | Web: Emscripten + embind, vanilla JS Canvas 2D (no SFML, no framework) | SFML doesn't target the web; keeps the page tiny | Locked |
@@ -45,4 +45,4 @@ docs/media/web-demo.png
 | D12 | Public repo `czes1ek/algo-visualizer` | Requested | Locked |
 | D13 | One `Search` class with a switch per algorithm, not a class hierarchy | The five algorithms differ only in frontier type and priority; one class is shorter and easier to test | Decided |
 | D14 | Built-in 5×7 pixel font in the desktop app | No binary font asset or license file to ship; fits the retro look | Decided |
-| D15 | Endpoints can't overlap; `setGoal(start)` is ignored | Removes the start == goal edge case at the source | Decided |
+| D15 | Endpoints can't overlap; `setGoal(start)` is ignored. An endpoint's cell reads as Empty, and the wall or weight it covers comes back when it moves on | Removes the start == goal edge case at the source; dragging an endpoint doesn't erase the grid | Decided |
